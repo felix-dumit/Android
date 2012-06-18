@@ -17,7 +17,7 @@ from xml.dom.minidom import Node
 from operator import itemgetter
 import os
 import simplejson as json
-from __future__ import division
+#from __future__ import division
 
 
 class Resource(object):
@@ -252,7 +252,7 @@ class Resource(object):
     @cherrypy.expose
     @cherrypy.tools.json_out() 
     #s_lat=-22.818342&s_lon=-47.059597&d_lat=-22.824192&d_lon=-47.067738 
-    def Point2Point(self, s_lat, s_lon, d_lat, d_lon, radius=500, limit=10, time=''):
+    def Point2Point(self, s_lat, s_lon, d_lat, d_lon, radius=500, limit=10, time='',maxres=5):
         
         near_source = self.getNearestBusStops(s_lat, s_lon, radius, limit)
         near_dest = self.getNearestBusStops(d_lat, d_lon, radius, limit)
@@ -309,7 +309,7 @@ class Resource(object):
         ld.sort(key = itemgetter('action'))                     
         
 
-        return sorted(ld, key=itemgetter('final_time'))
+        return sorted(ld, key=itemgetter('final_time'))[0:int(maxres)]
     
     @cherrypy.expose
     @cherrypy.tools.json_out()    
@@ -475,7 +475,7 @@ root.resource = Resource()
     
 conf = {
     'global': {
-        'server.socket_host': '127.0.0.1', # 'mc933.lab.ic.unicamp.br', # 
+        'server.socket_host': 'mc933.lab.ic.unicamp.br', # '127.0.0.1', # 
         'server.socket_port': 8010,
     }
 }
