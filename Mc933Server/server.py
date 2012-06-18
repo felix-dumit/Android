@@ -17,6 +17,7 @@ from xml.dom.minidom import Node
 from operator import itemgetter
 import os
 import simplejson as json
+from __future__ import division
 
 
 class Resource(object):
@@ -278,7 +279,8 @@ class Resource(object):
                 t_departure = datetime.strptime(ret['source']['time'], "%H:%M")
                 
                 delta = t_departure - dtime
-                nsecs = delta.total_seconds()
+                #nsecs = delta.total_seconds()
+                nsecs = (delta.microseconds + (delta.seconds + delta.days*24*3600)*10**6)/10**6
                 speed = p_source['dist'] / nsecs
                 
                 if(speed > 7):
