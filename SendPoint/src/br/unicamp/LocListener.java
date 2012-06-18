@@ -7,8 +7,6 @@ import android.util.Log;
 
 public class LocListener implements LocationListener {
 
-	double latitude, longitude;
-
 	public void onLocationChanged(Location location) {
 		Log.d("LL", "onlocationChanged");
 		SendPointActivity.latitude = location.getLatitude();

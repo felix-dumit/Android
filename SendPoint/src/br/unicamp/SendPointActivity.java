@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -13,9 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -25,7 +24,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,8 +37,8 @@ import com.google.android.maps.GeoPoint;
 
 public class SendPointActivity extends Activity implements OnClickListener,
 		OnSharedPreferenceChangeListener {
-	private static final String CENTER_LATITUDE = "-22.8177";
-	private static final String CENTER_LONGITUDE = "-47.0683";
+	private static final String CENTER_LATITUDE = "-00.8177";
+	private static final String CENTER_LONGITUDE = "-00.0683";
 	private static final String TAG = "SendPoint";
 	static double latitude;
 	static double longitude;
@@ -59,18 +57,16 @@ public class SendPointActivity extends Activity implements OnClickListener,
 
 		ImageButton b = (ImageButton) findViewById(R.id.imageButton1);
 		b.setOnClickListener(this);
-
-		
-		
-		// teste
-		
+				
 		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		//loadLocationManager();
 		ll = new LocListener();
 
 		Criteria criteria = new Criteria();
 		bestProvider = lm.getBestProvider(criteria, false);
 		Log.d("Bestprovider", bestProvider);
+		
+		bestProvider = LocationManager.GPS_PROVIDER;
+		
 		lm.requestLocationUpdates(bestProvider, 100, 1, ll);
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -87,8 +83,15 @@ public class SendPointActivity extends Activity implements OnClickListener,
 
 	public static GeoPoint getCurrentPosition() {
 
-		loc = lm.getLastKnownLocation(bestProvider);
+		//loc = lm.getLastKnownLocation(bestProvider);
+		List<String>providers =lm.getProviders(false);
+		
+		for (String prov : providers){
+			loc = lm.getLastKnownLocation(prov);
+			if(loc!=null)break;
 
+		}
+		
 		if (loc == null) {
 			Log.d("Location>", "null");
 			Log.d(String.valueOf(latitude), String.valueOf(longitude));
@@ -183,39 +186,6 @@ public class SendPointActivity extends Activity implements OnClickListener,
 		}
 
 	}
-	
-	
-	
-	
-	private void loadLocationManager() {
-		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-			// Ask the user to enable GPS
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setTitle("gps title");
-			builder.setMessage("gps message");
-			builder.setPositiveButton("yes",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							// Launch settings, allowing user to make a
-							// change
-							Intent i = new Intent(
-									Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-							startActivity(i);
-						}
-					});
-			builder.setNegativeButton("no",
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							// No location service, no Activity
-							finish();
-						}
-					});
-			builder.create().show();
-		}
-
-	}
-	
 	
 	
 
