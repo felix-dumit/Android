@@ -80,14 +80,15 @@ class Resource(object):
                 a = i
             else:
                 b = i
+        print (dados[a][0],dados[b][0])
         ta = datetime.strptime(dados[a][0], "%d/%m/%Y %H:%M:%S").replace(year=now.year, month=now.month, day=now.day)
         tb = datetime.strptime(dados[b][0], "%d/%m/%Y %H:%M:%S").replace(year=now.year, month=now.month, day=now.day)
         if (abs(ta - now) <= abs(tb - now)):
             txt += dados[a][2] + "," + dados[a][3]
-            return {'lat' : dados[a][3], 'lon' : dados[a][2]}
+            return [{'lat' : dados[a][3], 'lon' : dados[a][2]}]
         else:
             txt += dados[b][2] + "," + dados[b][3]
-            return {'lat' : dados[b][3], 'lon' : dados[b][2]}
+            return [{'lat' : dados[b][3], 'lon' : dados[b][2]}]
             
         # return txt
     
@@ -112,8 +113,8 @@ class Resource(object):
                 coord = points[0].getElementsByTagName("coordinates")
                 lon = float(coord[0].childNodes[0].data.split(",")[0])
                 lat = float(coord[0].childNodes[0].data.split(",")[1])
-                return {'name': name, 'lat': lat, 'lon':lon}
-        return {'name': '', 'lat': 0.0, 'lon': 0.0}
+                return [{'name': name, 'lat': lat, 'lon':lon}]
+        return [{'name': '', 'lat': 0.0, 'lon': 0.0}]
 
     #localhost:8888/getNearestBusStops?lat=;lon=
     @cherrypy.expose
@@ -183,9 +184,10 @@ class Resource(object):
                         #print "runid:" + str(run.getElementsByTagName("id")[0].childNodes[0].data)
                         break
                 stops = run.getElementsByTagName("stop")
+                i=0
                 for stop in stops:
-                    lp.append(stop.getElementsByTagName("point")[0].childNodes[0].data)
-                    txt += str(stop.getElementsByTagName("point")[0].childNodes[0].data) + "<br/>"
+                    i+=1
+                    lp.append({'point'+str(i): stop.getElementsByTagName("point")[0].childNodes[0].data})
        
         return lp
     
@@ -294,7 +296,7 @@ class Resource(object):
                 
                 
                 ld.append({
-                           'start_time': time,
+                           'start_time': datetime.strftime(dtime,"%H:%M"),
                            'departure': ret['source']['time'],
                            'arrival':ret['dest']['time'],
                            'source': p_source['sid'],
@@ -475,7 +477,7 @@ root.resource = Resource()
     
 conf = {
     'global': {
-        'server.socket_host': 'mc933.lab.ic.unicamp.br', # '127.0.0.1', # 
+        'server.socket_host': '127.0.0.1', # 'mc933.lab.ic.unicamp.br', # 
         'server.socket_port': 8010,
     }
 }

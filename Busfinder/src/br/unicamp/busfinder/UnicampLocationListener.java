@@ -19,6 +19,15 @@ public class UnicampLocationListener implements LocationListener {
 	private static final String TAG = "LocationListener:";
 	private Context context;
 	private MapView map;
+	private boolean move;
+
+	public boolean isMove() {
+		return move;
+	}
+
+	public void setMove(boolean move) {
+		this.move = move;
+	}
 
 	public UnicampLocationListener(Context context, MapView map) {
 		this.context = context;
@@ -29,18 +38,22 @@ public class UnicampLocationListener implements LocationListener {
 
 		GeoPoint gpoint = new GeoPoint((int) (location.getLatitude() * 1E6),
 				(int) (location.getLongitude() * 1E6));
-		Drawable d = context.getResources().getDrawable(R.drawable.ic_launcher);
+		//Drawable d = context.getResources().getDrawable(R.drawable.ic_launcher);
+		
 		BusFinderActivity.myPoint = gpoint;
 		
-		//Overlay myPosition = new MyLocOverlay(gpoint, map);
-		//map.getOverlays().remove(myPosition);
-		//map.getOverlays().add(myPosition);
+		map.getOverlays().remove(BusFinderActivity.myPosition);
+		BusFinderActivity.myPosition = new MyLocOverlay(gpoint, map);
+		map.getOverlays().add(BusFinderActivity.myPosition);
 
-		MapController controller = map.getController();
-		controller.animateTo(gpoint);
+		if(isMove()){
+			map.getController().animateTo(gpoint);
+			
+		}
 
-		Log.d(TAG, "LocationChanged to" + gpoint.getLatitudeE6() + "LAT "
-				+ gpoint.getLongitudeE6() + "LON");
+		map.invalidate();
+		Log.d(TAG, "lat="+ gpoint.getLatitudeE6()/1E6 + ";"
+				+ "lon="+gpoint.getLongitudeE6()/1E6 );
 
 	}
 

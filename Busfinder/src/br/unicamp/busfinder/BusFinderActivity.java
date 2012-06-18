@@ -2,12 +2,15 @@ package br.unicamp.busfinder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Time;
 import java.util.ArrayList;
-import java.util.ResourceBundle;
+import java.util.Calendar;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -20,8 +23,6 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -50,8 +51,7 @@ public class BusFinderActivity extends MapActivity implements
 
 	public static MapView map;
 	private MapController controller;
-	private Overlay myPosition;
-	private GeoPoint gpoint;
+	public static Overlay myPosition;
 
 	private static LocationManager lm;
 	UnicampLocationListener locationListener;
@@ -70,12 +70,12 @@ public class BusFinderActivity extends MapActivity implements
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		//bundle = savedInstanceState;
-		//if(bundle==null)bundle = new Bundle();
+		// bundle = savedInstanceState;
+		// if(bundle==null)bundle = new Bundle();
 
-		try{
-		Log.d(TAG, "OnCreate:"+ savedInstanceState.toString());
-		}catch(Exception e){
+		try {
+			Log.d(TAG, "OnCreate:" + savedInstanceState.toString());
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -105,31 +105,25 @@ public class BusFinderActivity extends MapActivity implements
 
 		controller = map.getController();
 
-		
-
 		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-		
 		locationListener = new UnicampLocationListener(this, map);
+		
+		locationListener.setMove(false);
 
-		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0,
+		lm.requestLocationUpdates(getBestProvider(), 0, 0,
 				locationListener);
 		
-		gpoint = getCurrentPosition(this);
-		myPosition = new MyLocOverlay(gpoint, map);
+		myPoint = getCurrentPosition(this);
+		myPosition = new MyLocOverlay(myPoint, map);
 		map.getOverlays().add(myPosition);
 
-		controller.setCenter(gpoint);
-		controller.animateTo(gpoint);
+		controller.setCenter(myPoint);
+		controller.animateTo(myPoint);
 		controller.setZoom(16);
 
 		TouchOverlay t = new TouchOverlay(this);
 		map.getOverlays().add(t);
-
-		
-
-		
-		
 
 		acTextView = (AutoCompleteTextView) findViewById(R.id.fav_search);
 		acTextView.setAdapter(favorites.getAdapter());
@@ -146,7 +140,6 @@ public class BusFinderActivity extends MapActivity implements
 		Log.d(TAG, "onDestroy");
 		super.onDestroy();
 
-
 	}
 
 	@Override
@@ -154,7 +147,7 @@ public class BusFinderActivity extends MapActivity implements
 		Log.d(TAG, "onPause");
 		super.onPause();
 		lm.removeUpdates(locationListener);
-		
+
 	}
 
 	@Override
@@ -163,20 +156,19 @@ public class BusFinderActivity extends MapActivity implements
 		super.onResume();
 		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0,
 				locationListener);
-		}
+	}
 
 	@Override
 	protected void onStop() {
-		Log.d(TAG,"onStop");
-		super.onStop();	
+		Log.d(TAG, "onStop");
+		super.onStop();
 	}
-	
-	
+
 	@Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		Log.d(TAG, "onRestoreBundle:"+savedInstanceState.toString());
+		Log.d(TAG, "onRestoreBundle:" + savedInstanceState.toString());
 		super.onRestoreInstanceState(savedInstanceState);
-		
+
 		ArrayList<PItem> favs = savedInstanceState
 				.getParcelableArrayList("favs");
 
@@ -192,7 +184,7 @@ public class BusFinderActivity extends MapActivity implements
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
-		Log.d(TAG, "onSaveBundle:"+outState.toString());
+		Log.d(TAG, "onSaveBundle:" + outState.toString());
 		super.onSaveInstanceState(outState);
 		outState.putParcelableArrayList("favs", favorites.getPinpoints());
 	}
@@ -216,17 +208,33 @@ public class BusFinderActivity extends MapActivity implements
 			break;
 		case R.id.itemKML:
 
+			Calendar now = Calendar.getInstance();
+			now.setTime(new Time(12, 40, 00));
 			Log.d(TAG, "KML");
-
-			loadbusStops(busPoints);
+			String str = "http://mc933.lab.ic.unicamp.br:8010/Point2Point?s_lat=-22.827799;s_lon=-47.070858;d_lat=-22.814716;d_lon=-47.064303";
+			str+=";time="+now.getTime().getHours()+":"+now.getTime().getMinutes();
+			JSONArray jar = ServerOperations.getJSON(str);
+			if(jar==null)break;
+			for (int i=0; i<jar.length();i++){
+				try {
+					Log.d("ARRIVE:",jar.getJSONObject(i).getString("arrival"));
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}				
+			}
+			// loadbusStops(busPoints);
 
 			break;
 		case R.id.itemLocation:
 
-			GeoPoint gpoint = getCurrentPosition(this);
-			myPosition = new MyLocOverlay(gpoint, map);
-			map.getOverlays().add(myPosition);
-
+			 myPoint = getCurrentPosition(this);
+			// map.getOverlays().remove(myPosition);
+			//myPosition = new MyLocOverlay(gpoint, map);
+			//favorites.insertPinpoint(new PItem(gpoint, "myloc", "snip"));
+			//map.getOverlays().add(myPosition);
+			controller.animateTo(myPoint);
+			controller.setZoom(18);
 			break;
 		}
 		Log.d(TAG, "Menu Selected: " + item.getItemId());
@@ -251,23 +259,33 @@ public class BusFinderActivity extends MapActivity implements
 		map.setSatellite(prefs.getBoolean("satelliteView", false));
 	}
 
+	
+	public static String getBestProvider(){
+		Criteria criteria = new Criteria();
+		String ret =  lm.getBestProvider(criteria, false);
+		Log.d("BestProvideR:",ret);
+		return ret;
+		
+	}
+	
 	public static GeoPoint getCurrentPosition(Context c) {
 		GeoPoint src;
-		//LocationManager locationMgr = (LocationManager) c
-		//		.getSystemService(Context.LOCATION_SERVICE);
+		// LocationManager locationMgr = (LocationManager) c
+		// .getSystemService(Context.LOCATION_SERVICE);
 
-		Criteria criteria = new Criteria();
-		String towers = lm.getBestProvider(criteria, false);
-
-		Location loc = lm.getLastKnownLocation(towers);
+		
+		Location loc = lm.getLastKnownLocation(getBestProvider());
 
 		if (loc != null) {
 			src = new GeoPoint((int) (loc.getLatitude() * 1E6),
 					(int) (loc.getLongitude() * 1E6));
+			Log.d(TAG,"gotLocation");
+
 
 		} else {
 			Toast.makeText(c, "no provider found", Toast.LENGTH_SHORT).show();
 			src = myPoint;
+			Log.d(TAG,"location = null");
 		}
 
 		return src;

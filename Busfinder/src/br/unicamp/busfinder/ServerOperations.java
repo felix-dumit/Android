@@ -20,19 +20,19 @@ import android.widget.Toast;
 
 public class ServerOperations {
 
-	public void function() {
+	public static JSONArray getJSON(String site) {
 
-		Log.d("onClick", "ok");
+		Log.d("Executing REquest", site);
 
 		StringBuilder builder = new StringBuilder();
 
-		HttpGet get = new HttpGet("http://mc933.lab.ic.unicamp.br:8010");
+		HttpGet get = new HttpGet(site);
 
 		HttpClient client = new DefaultHttpClient();
 
+		HttpResponse response;
 		try {
-
-			HttpResponse response = client.execute(get);
+			response = client.execute(get);
 
 			if (response.getStatusLine().getStatusCode() == 200) {
 				HttpEntity entity = response.getEntity();
@@ -46,36 +46,19 @@ public class ServerOperations {
 			} else {
 				Log.e("ERRRO", "Failed to download file");
 			}
+
+			Log.d("RESP:", builder.toString());
+
+			return new JSONArray(builder.toString());
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-
-		Log.d("RESP:", builder.toString());
-
-		/*
-		 * try { JSONObject json = new JSONObject(builder.toString());
-		 * Log.d("JSON:",json.toString()); Log.d("JLAT:",json.getString("lat"));
-		 * 
-		 * 
-		 * } catch (JSONException e) { // TODO Auto-generated catch block
-		 * e.printStackTrace(); }
-		 */
-
-		try {
-			JSONArray jsonArray = new JSONArray(builder.toString());
-
-			for (int i = 0; i < jsonArray.length(); i++) {
-				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				Log.i("JPARSE:", jsonObject.getString("time"));
-
-			}
-
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		return null;
 
 	}
 
