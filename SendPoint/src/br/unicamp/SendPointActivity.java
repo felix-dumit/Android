@@ -62,6 +62,7 @@ public class SendPointActivity extends Activity implements OnClickListener,
 
 		
 		
+		// teste
 		
 		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		//loadLocationManager();
