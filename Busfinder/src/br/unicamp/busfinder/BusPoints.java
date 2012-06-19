@@ -60,13 +60,7 @@ public class BusPoints extends ListPoints {
 												item.getPoint()) + "m away",
 								Toast.LENGTH_SHORT).show();
 
-						Drawable icon = context.getResources().getDrawable(
-								R.drawable.favbus);
-
-						icon.setBounds(0, 0, icon.getIntrinsicWidth(),
-								icon.getIntrinsicHeight());
-
-						item.setMarker(boundCenter(icon));
+						item.setMarker(boundCenter(getBusIcon()));
 					}
 				});
 
@@ -77,17 +71,19 @@ public class BusPoints extends ListPoints {
 			}
 		});
 
+		dialog.setCanceledOnTouchOutside(true);
+
 		dialog.show();
 
 		return true;
 
 	}
 
-	 @Override
-	 public void insertPinpoint(PItem item) {
-	 super.insertPinpoint(item);
-	 favAdapter.add(item.getTitle());
-	 }
+	@Override
+	public void insertPinpoint(PItem item) {
+		super.insertPinpoint(item);
+		favAdapter.add(item.getTitle());
+	}
 
 	@Override
 	public void removePinpoint(PItem item) {
@@ -97,6 +93,18 @@ public class BusPoints extends ListPoints {
 
 	public ArrayAdapter<String> getAdapter() {
 		return favAdapter;
+	}
+
+	private Drawable getBusIcon() {
+
+		Drawable icon = context.getResources().getDrawable(R.drawable.favbus);
+
+		icon.setBounds(0, 0, icon.getIntrinsicWidth(),
+				icon.getIntrinsicHeight());
+
+		return null;
+		// return icon;
+
 	}
 
 }

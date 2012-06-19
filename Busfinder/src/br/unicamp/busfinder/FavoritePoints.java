@@ -77,6 +77,7 @@ public class FavoritePoints extends ListPoints {
 			}
 		});
 
+		dialog.setCanceledOnTouchOutside(true);
 		dialog.show();
 
 		return true;

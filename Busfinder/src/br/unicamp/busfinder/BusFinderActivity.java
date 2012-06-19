@@ -1,5 +1,10 @@
 package br.unicamp.busfinder;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Time;
@@ -32,13 +37,16 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
+
+import de.android1.overlaymanager.ManagedOverlay;
+import de.android1.overlaymanager.OverlayManager;
 
 public class BusFinderActivity extends MapActivity implements
 		OnSharedPreferenceChangeListener, OnClickListener {
@@ -51,7 +59,7 @@ public class BusFinderActivity extends MapActivity implements
 
 	public static MapView map;
 	private MapController controller;
-	public static Overlay myPosition;
+	public static ListPoints myPosition;
 
 	private static LocationManager lm;
 	UnicampLocationListener locationListener;
@@ -59,6 +67,7 @@ public class BusFinderActivity extends MapActivity implements
 	Drawable d;
 	static BusPoints busPoints;
 	static FavoritePoints favorites;
+	OverlayManager overlayManager;
 
 	private SharedPreferences prefs;
 	ImageButton button;
@@ -98,8 +107,14 @@ public class BusFinderActivity extends MapActivity implements
 
 		favorites = new FavoritePoints(getResources().getDrawable(
 				R.drawable.favorites), this);
+		
 		map.getOverlays().add(favorites);
+		
+		myPosition = new ListPoints(getResources().getDrawable(R.drawable.ic_launcher), this);
+		
 
+		restorePointsList(favorites);
+		
 		loadPrefs();
 		map.invalidate();
 
@@ -108,15 +123,17 @@ public class BusFinderActivity extends MapActivity implements
 		lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 		locationListener = new UnicampLocationListener(this, map);
-		
+
 		locationListener.setMove(false);
 
-		lm.requestLocationUpdates(getBestProvider(), 0, 0,
-				locationListener);
-		
+		lm.requestLocationUpdates(getBestProvider(), 0, 0, locationListener);
+
 		myPoint = getCurrentPosition(this);
-		myPosition = new MyLocOverlay(myPoint, map);
+		myPosition = new MyLoc(getResources().getDrawable(
+				R.drawable.user),this);
+		//myPosition.setItem(new OverlayItem(myPoint, "MyPoin", "snippet"));
 		map.getOverlays().add(myPosition);
+		myPosition.insertPinpoint(new PItem(myPoint, "mypoint", "snippet"));
 
 		controller.setCenter(myPoint);
 		controller.animateTo(myPoint);
@@ -124,20 +141,44 @@ public class BusFinderActivity extends MapActivity implements
 
 		TouchOverlay t = new TouchOverlay(this);
 		map.getOverlays().add(t);
-
+	
+	
 		acTextView = (AutoCompleteTextView) findViewById(R.id.fav_search);
 		acTextView.setAdapter(favorites.getAdapter());
 		// textView.setAdapter(busPoints.getAdapter());
 
 		button = (ImageButton) findViewById(R.id.imageButton1);
 		button.setOnClickListener(this);
+		
+		
+		overlayManager = new OverlayManager(this, map);
+		Drawable defaultmarker = getResources().getDrawable(R.drawable.ic_launcher);     
 
+	    //ManagedOverlay managedOverlay = overlayManager.createOverlay(defaultmarker);
+	    //creating some marker:
+	  //  managedOverlay.createItem(new GeoPoint(CENTER_LATITUDE,CENTER_LONGITUDE));	   //managedOverlay.createItem(new GeoPoint(...));
+
+	  //  managedOverlay.enableLazyLoadAnimation((ImageView) findViewById(R.id.imageButton1));
+	    //registers the ManagedOverlayer to the MapView
+	    overlayManager.populate();
+	    
+	  //  managedOverlay.setOnOverlayGestureListener(new GestureListener(this));	
+	    
+		
+		
+		
+		
+		
+
+		
+		
 	}
 
 	@Override
 	protected void onDestroy() {
 		// TODO Auto-generated method stub
 		Log.d(TAG, "onDestroy");
+		savePointsList(favorites);
 		super.onDestroy();
 
 	}
@@ -162,6 +203,72 @@ public class BusFinderActivity extends MapActivity implements
 	protected void onStop() {
 		Log.d(TAG, "onStop");
 		super.onStop();
+	}
+
+	private void restorePointsList(FavoritePoints fav) {
+
+		BufferedReader reader = null;
+		String line, title="", snippet="";
+
+		try {
+
+			reader = new BufferedReader(new FileReader(getFilesDir()
+					+ File.separator + "favorites.bus"));
+			int lines=0;
+			while ((line = reader.readLine()) != null) {
+				Log.d("Reading...", line);
+				String[] strs = line.split("\\#");
+				if (strs.length > 2)
+					title = strs[2];
+				if (strs.length>3)
+					snippet = strs[3];
+
+				fav.insertPinpoint(new PItem(new GeoPoint(Integer
+						.parseInt(strs[0]), Integer.parseInt(strs[1])), title,
+						snippet));
+				
+				lines++;
+
+			}
+			Log.d("TOTALFAVS", ""+lines);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private void savePointsList(FavoritePoints fav) {
+		BufferedWriter writer = null;
+
+		String FILENAME = "favorites.bus";
+
+
+
+
+
+		try {
+			deleteFile(FILENAME);
+
+			writer = new BufferedWriter(new FileWriter(getFilesDir()
+					+ File.separator + FILENAME));
+
+			for (PItem it : fav.getPinpoints()) {
+
+				Log.d("Writing..", it.toString());
+				writer.write(it.getPoint().getLatitudeE6() + "#"
+						+ it.getPoint().getLongitudeE6() + "#" + it.getTitle()
+						+ "#" + it.getSnippet() + "\n");
+
+			}
+
+			writer.flush();
+			writer.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	@Override
@@ -212,27 +319,29 @@ public class BusFinderActivity extends MapActivity implements
 			now.setTime(new Time(12, 40, 00));
 			Log.d(TAG, "KML");
 			String str = "http://mc933.lab.ic.unicamp.br:8010/Point2Point?s_lat=-22.827799;s_lon=-47.070858;d_lat=-22.814716;d_lon=-47.064303";
-			str+=";time="+now.getTime().getHours()+":"+now.getTime().getMinutes();
+			str += ";time=" + now.getTime().getHours() + ":"
+					+ now.getTime().getMinutes();
 			JSONArray jar = ServerOperations.getJSON(str);
-			if(jar==null)break;
-			for (int i=0; i<jar.length();i++){
+			if (jar == null)
+				break;
+			for (int i = 0; i < jar.length(); i++) {
 				try {
-					Log.d("ARRIVE:",jar.getJSONObject(i).getString("arrival"));
+					Log.d("ARRIVE:", jar.getJSONObject(i).getString("arrival"));
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}				
+				}
 			}
 			// loadbusStops(busPoints);
 
 			break;
 		case R.id.itemLocation:
 
-			 myPoint = getCurrentPosition(this);
+			myPoint = getCurrentPosition(this);
 			// map.getOverlays().remove(myPosition);
-			//myPosition = new MyLocOverlay(gpoint, map);
-			//favorites.insertPinpoint(new PItem(gpoint, "myloc", "snip"));
-			//map.getOverlays().add(myPosition);
+			// myPosition = new MyLocOverlay(gpoint, map);
+			// favorites.insertPinpoint(new PItem(gpoint, "myloc", "snip"));
+			// map.getOverlays().add(myPosition);
 			controller.animateTo(myPoint);
 			controller.setZoom(18);
 			break;
@@ -259,33 +368,30 @@ public class BusFinderActivity extends MapActivity implements
 		map.setSatellite(prefs.getBoolean("satelliteView", false));
 	}
 
-	
-	public static String getBestProvider(){
+	public static String getBestProvider() {
 		Criteria criteria = new Criteria();
-		String ret =  lm.getBestProvider(criteria, false);
-		Log.d("BestProvideR:",ret);
+		String ret = lm.getBestProvider(criteria, false);
+		Log.d("BestProvideR:", ret);
 		return ret;
-		
+
 	}
-	
+
 	public static GeoPoint getCurrentPosition(Context c) {
 		GeoPoint src;
 		// LocationManager locationMgr = (LocationManager) c
 		// .getSystemService(Context.LOCATION_SERVICE);
 
-		
 		Location loc = lm.getLastKnownLocation(getBestProvider());
 
 		if (loc != null) {
 			src = new GeoPoint((int) (loc.getLatitude() * 1E6),
 					(int) (loc.getLongitude() * 1E6));
-			Log.d(TAG,"gotLocation");
-
+			Log.d(TAG, "gotLocation");
 
 		} else {
 			Toast.makeText(c, "no provider found", Toast.LENGTH_SHORT).show();
 			src = myPoint;
-			Log.d(TAG,"location = null");
+			Log.d(TAG, "location = null");
 		}
 
 		return src;
@@ -336,9 +442,7 @@ public class BusFinderActivity extends MapActivity implements
 				GeoPoint gpoint = null;
 				String stopName = null;
 
-				// Log.d("Child Size", "LEN : " + kids.getLength());
 				for (j = 0; j < kids.getLength(); j++) {
-					// Log.d("NAME", "NAME : " + kids.item(j).getNodeName());
 					if (kids.item(j).getNodeName().contains("Point")) {
 						String[] pairs = kids.item(j).getTextContent().trim()
 								.split(",");
@@ -354,7 +458,7 @@ public class BusFinderActivity extends MapActivity implements
 				if (gpoint == null || stopName == null)
 					continue;
 
-				busStops.insertPinpoint(new PItem(gpoint, stopName, "snippet"));
+				busStops.insertPinpoint(new PItem(gpoint, stopName, ""));
 
 			}
 

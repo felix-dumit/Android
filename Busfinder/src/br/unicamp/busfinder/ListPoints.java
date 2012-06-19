@@ -12,7 +12,7 @@ import android.util.Log;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.OverlayItem;
 
-public class ListPoints extends ItemizedOverlay<PItem>{
+public class ListPoints extends ItemizedOverlay<PItem> {
 
 	private ArrayList<PItem> pinpoints = new ArrayList<PItem>();
 	protected Context context;
@@ -27,7 +27,7 @@ public class ListPoints extends ItemizedOverlay<PItem>{
 	@Override
 	protected PItem createItem(int i) {
 		return getPinpoints().get(i);
-		
+
 	}
 
 	@Override
@@ -40,22 +40,24 @@ public class ListPoints extends ItemizedOverlay<PItem>{
 	 * this.populate();
 	 */
 	public void insertPinpoint(PItem item) {
-		getPinpoints().add(item);
-		setLastFocusedIndex(-1);
-		this.populate();
+		if (!getPinpoints().contains(item)) {
+			getPinpoints().add(item);
+			setLastFocusedIndex(-1);
+			this.populate();
+		}
 
+	}
+	
+	public void clear(){
+		this.pinpoints.clear();
 	}
 
 	public void removePinpoint(PItem item) {
-
 		// getBlacklist().add(index);
-
 
 		pinpoints.remove(item);
 		this.setLastFocusedIndex(-1);
 		this.populate();
-
-
 
 	}
 
@@ -65,13 +67,10 @@ public class ListPoints extends ItemizedOverlay<PItem>{
 
 	public void setPinpoints(ArrayList<PItem> npinpoints) {
 		this.pinpoints.clear();
-		for(PItem p : npinpoints){
+		for (PItem p : npinpoints) {
 			this.insertPinpoint(p);
 		}
-		
+
 	}
-	
-
-
 
 }

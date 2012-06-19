@@ -1,5 +1,6 @@
 package br.unicamp.busfinder;
 
+import android.graphics.drawable.Drawable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -51,7 +52,7 @@ public class PItem extends OverlayItem implements Parcelable {
 
 	public PItem(GeoPoint gp, String title, String snippet) {
 		super(gp, title, snippet);
-		Log.d(TAG, "Pitem:"+title);
+		//Log.d(TAG, "Pitem:"+title);
 
 	}
 	

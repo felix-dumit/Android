@@ -12,6 +12,8 @@ import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
+
 import br.unicamp.busfinder.R;
 
 public class UnicampLocationListener implements LocationListener {
@@ -42,9 +44,11 @@ public class UnicampLocationListener implements LocationListener {
 		
 		BusFinderActivity.myPoint = gpoint;
 		
-		map.getOverlays().remove(BusFinderActivity.myPosition);
-		BusFinderActivity.myPosition = new MyLocOverlay(gpoint, map);
-		map.getOverlays().add(BusFinderActivity.myPosition);
+		//map.getOverlays().remove(BusFinderActivity.myPosition);
+		//BusFinderActivity.myPosition = new MyLocOverlay(gpoint, "MyLoc","snipped");
+		BusFinderActivity.myPosition.clear();
+		BusFinderActivity.myPosition.insertPinpoint(new PItem(BusFinderActivity.myPoint, "mypoint", "snippet"));
+		//map.getOverlays().add(BusFinderActivity.myPosition);
 
 		if(isMove()){
 			map.getController().animateTo(gpoint);

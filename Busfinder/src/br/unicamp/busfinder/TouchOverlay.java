@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,12 +15,14 @@ import org.xml.sax.SAXException;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.gesture.GestureOverlayView;
+import android.gesture.GestureOverlayView.OnGestureListener;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -29,9 +30,8 @@ import android.widget.Toast;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 
-public class TouchOverlay extends Overlay {
+public class TouchOverlay extends Overlay implements OnGestureListener{
 	long start_time, stop_time;
 	private Context c;
 	private Drawable d;
@@ -50,6 +50,7 @@ public class TouchOverlay extends Overlay {
 
 	}
 
+	
 	@Override
 	public boolean onTouchEvent(MotionEvent e, final MapView map) {
 
@@ -75,11 +76,17 @@ public class TouchOverlay extends Overlay {
 
 		if (stop_time - start_time > 1000 & distance < 50) {
 			Log.d("TouchOverlay", "LongTouch");
+			
+			
+			Vibrator v = (Vibrator) c.getSystemService(Context.VIBRATOR_SERVICE);
+			v.vibrate(200);
+
+			
 
 			AlertDialog alert = new AlertDialog.Builder(c).create();
 			alert.setTitle("Alert Title");
 			alert.setMessage("Pick Option");
-			alert.setButton("Place Pinpoint",
+			alert.setButton("Add to Favorites",
 					new DialogInterface.OnClickListener() {
 
 						public void onClick(DialogInterface dialog, int which) {
@@ -120,10 +127,8 @@ public class TouchOverlay extends Overlay {
 													inputDesc.getText()
 															.toString());
 
-											// overlayList.remove(favorites);
 											BusFinderActivity.favorites
 													.insertPinpoint(item);
-											// overlayList.add(favorites);
 
 											map.invalidate();
 
@@ -156,6 +161,8 @@ public class TouchOverlay extends Overlay {
 
 				}
 			});
+
+			alert.setCanceledOnTouchOutside(true);
 
 			alert.show();
 
@@ -264,5 +271,31 @@ public class TouchOverlay extends Overlay {
 			e.printStackTrace();
 		}
 	}
+
+
+	public void onGesture(GestureOverlayView overlay, MotionEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onGestureCancelled(GestureOverlayView overlay, MotionEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onGestureEnded(GestureOverlayView overlay, MotionEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onGestureStarted(GestureOverlayView overlay, MotionEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	
 
 }
